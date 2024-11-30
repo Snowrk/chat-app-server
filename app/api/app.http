@@ -1,0 +1,24 @@
+POST http://localhost:3001/register
+Content-Type: application/json
+
+{
+    "username": "abc",
+    "password": "abc"
+}
+
+###
+
+DELETE http://localhost:3001/users
+
+###
+
+DELETE http://localhost:3001/rooms
+
+###
+
+POST http://localhost:3001/rooms
+Content-Type: application/json
+
+{
+    "roomName": "Global"
+}
