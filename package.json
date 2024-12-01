@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node app.js",  // your app's start script
-    "build": "echo 'No build necessary'"
+    "start": "node app.js",
+    "build": "echo No build necessary'"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
