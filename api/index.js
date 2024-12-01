@@ -13,8 +13,7 @@ app.use(express.json());
 app.use(cors());
 const port = 3001;
 
-const uri =
-  "mongodb+srv://shinsan:5kmp60lRVx3wodUE@todo-users.8rdtq.mongodb.net/?retryWrites=true&w=majority&appName=todo-users";
+const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri, {
   serverApi: {
