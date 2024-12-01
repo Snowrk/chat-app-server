@@ -74,7 +74,7 @@ app.post("/login", async (request, response) => {
     response.status(400);
     response.send({ err: "User not registered" });
   } else if (!(await bcrypt.compare(password, user.password))) {
-    response.status(200);
+    response.status(400);
     response.send({ err: "Incorrect password" });
   } else {
     const payload = { userId: user.userId };
@@ -95,6 +95,17 @@ app.post("/register", async (request, response) => {
     console.log(password);
     const hashedPassword = await bcrypt.hash(password, 10);
     const globalRoom = await rooms.findOne({ roomName: "Global" });
+    if (!globalRoom) {
+      const globalRoomId = v4();
+      await rooms.insertOne({
+        roomId: globalRoomId,
+        roomName: "Global",
+        type: "group",
+        imgUrl: null,
+        users: [],
+        messages: [],
+      });
+    }
     const userId = v4();
     await users.insertOne({
       userId: userId,
@@ -119,9 +130,11 @@ app.get("/users", async (request, response) => {
   const list = await users.find().toArray();
   response.send(list);
 });
-app.get("/rooms", async (request, response) => {
+app.get("/rooms", authenticator, async (request, response) => {
+  const { userId } = request.payload;
+  const user = await users.findOne({ userId });
   const list = await rooms.find().toArray();
-  response.send(list);
+  response.send(list.filter((e) => user.rooms.includes(e.roomId)));
 });
 app.get("/profile", authenticator, async (request, response) => {
   const { userId } = request.payload;
@@ -145,6 +158,9 @@ app.put(
     response.send({ msg: "updated successfully" });
   }
 );
+app.get("/roomsList", async (request, response) => {
+  response.send(await rooms.find().toArray());
+});
 app.delete("/users", async (request, response) => {
   await users.deleteMany();
   const list = await users.find().toArray();
@@ -155,10 +171,10 @@ app.delete("/rooms", async (request, response) => {
   const list = await rooms.find().toArray();
   response.send({ msg: "successfully deleted", list });
 });
-app.post("/rooms", async (request, response) => {
-  const { roomName, imgUrl, userId, friendId } = request.body;
+app.post("/rooms/private", async (request, response) => {
+  const { roomName, imgUrl, userId, friendId, type } = request.body;
   const roomId = v4();
-  const users = userId !== undefined ? [userId, friendId] : [];
+  const usersList = userId !== undefined ? [userId, friendId] : [];
   if (roomName === "Global") {
     response.status(400);
     response.send({ err: "Global is reserved name" });
@@ -167,9 +183,24 @@ app.post("/rooms", async (request, response) => {
     roomId,
     roomName,
     imgUrl: imgUrl !== undefined ? imgUrl : null,
-    users,
+    users: usersList,
+    type,
     messages: [],
   });
+
+  const user = await users.findOne({ userId });
+  const friend = await users.findOne({ userId: friendId });
+  console.log(user);
+  console.log(friend);
+  await users.updateOne(
+    { userId },
+    { $set: { rooms: [...user.rooms, roomId] } }
+  );
+  await users.updateOne(
+    { userId: friendId },
+    { $set: { rooms: [...friend.rooms, roomId] } }
+  );
+
   const room = await rooms.findOne({ roomId });
   response.send(room);
 });
@@ -198,6 +229,11 @@ app.put("/rooms/:roomId/updateMessageList", async (request, response) => {
     response.send({ msg: "nothing to update" });
   }
 });
+app.delete("/rooms/:roomName", async (request, response) => {
+  const { roomName } = request.params;
+  await rooms.deleteOne({ roomName });
+  response.send({ msg: `deleted roomName: ${roomName}` });
+});
 
 io.on("connection", (socket) => {
   console.log("yo");
@@ -209,7 +245,7 @@ io.on("connection", (socket) => {
   });
   socket.on("send-message", async (msgObj, roomId) => {
     console.log(roomId, socket.id);
-    socket.broadcast.emit("receive-message", msgObj, roomId);
+    socket.to(roomId).emit("receive-message", msgObj, roomId);
     const room = await rooms.findOne({ roomId });
     const idx = room.messages.findIndex((e) => e.id === msgObj.id);
     if (idx === -1) {

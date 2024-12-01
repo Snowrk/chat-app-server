@@ -22,3 +22,12 @@ Content-Type: application/json
 {
     "roomName": "Global"
 }
+
+###
+DELETE http://localhost:3001/rooms/Test1-abc
+
+###
+GET http://localhost:3001/roomsList
+
+###
+GET http://localhost:3001/users
