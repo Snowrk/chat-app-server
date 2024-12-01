@@ -1,4 +1,3 @@
-import "../../envConfig.js";
 import express from "express";
 import http, { request } from "http";
 import { Server } from "socket.io";
