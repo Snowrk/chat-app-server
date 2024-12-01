@@ -13,7 +13,8 @@ app.use(express.json());
 app.use(cors());
 const port = 3001;
 
-const uri = process.env.MONGODB_URI;
+const uri =
+  "mongodb+srv://shinsan:5kmp60lRVx3wodUE@todo-users.8rdtq.mongodb.net/?retryWrites=true&w=majority&appName=todo-users";
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -24,7 +25,9 @@ const client = new MongoClient(uri, {
 });
 
 const io = new Server(server, {
-  cors: { origin: "http://localhost:3000/" },
+  cors: {
+    origin: ["http://localhost:3000", "https://chat-app-eosin-rho.vercel.app/"],
+  },
 });
 
 async function run() {
@@ -235,6 +238,10 @@ app.delete("/rooms/:roomName", async (request, response) => {
   await rooms.deleteOne({ roomName });
   response.send({ msg: `deleted roomName: ${roomName}` });
 });
+app.put("/offline", async (request, response) => {
+  await users.updateMany({}, { $set: { online: false } });
+  response.send(await users.find().toArray());
+});
 
 io.on("connection", (socket) => {
   console.log("yo");
@@ -243,10 +250,17 @@ io.on("connection", (socket) => {
     roomsList.forEach((element) => {
       socket.join(element.roomId);
     });
+    console.log(socket.rooms);
+  });
+  socket.onAny((event, ...args) => {
+    console.log(`got ${event}`, args);
+  });
+  socket.onAnyOutgoing((event, ...args) => {
+    console.log(`got ${event}`, args);
   });
   socket.on("send-message", async (msgObj, roomId) => {
     console.log(roomId, socket.id);
-    socket.to(roomId).emit("receive-message", msgObj, roomId);
+    socket.broadcast.emit("receive-message", msgObj, roomId);
     const room = await rooms.findOne({ roomId });
     const idx = room.messages.findIndex((e) => e.id === msgObj.id);
     if (idx === -1) {

@@ -44,3 +44,6 @@ Content-Type: application/json
     "username": "abc",
     "password": "abc"
 }
+
+###
+PUT http://localhost:3001/offline
