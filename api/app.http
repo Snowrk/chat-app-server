@@ -35,3 +35,12 @@ GET http://localhost:3001/users
 ###
 
 GET https://chat-app-server-red-seven.vercel.app/users
+
+###
+POST https://chat-app-server-red-seven.vercel.app/login
+Content-Type: application/json
+
+{
+    "username": "abc",
+    "password": "abc"
+}

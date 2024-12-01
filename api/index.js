@@ -23,7 +23,9 @@ const client = new MongoClient(uri, {
   },
 });
 
-const io = new Server(server, { cors: { origin: "http://localhost:3000" } });
+const io = new Server(server, {
+  cors: { origin: "https://chat-app-eosin-rho.vercel.app/" },
+});
 
 async function run() {
   try {
