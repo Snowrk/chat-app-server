@@ -9,8 +9,13 @@ import cors from "cors";
 
 const app = express();
 const server = http.createServer(app);
+const corsOptions = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 const port = process.env.PORT || 4000;
 
 const uri =
